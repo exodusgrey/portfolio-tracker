@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fidelity Portfolio Tracker</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #0a0e27;
+            color: #e0e6ed;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a1f3a 0%, #0a0e27 100%);
+            padding: 30px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #1e2642;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #8b95a5;
+            font-size: 1.1rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e2642 0%, #161b33 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #252d47;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .stat-label {
+            color: #8b95a5;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e0e6ed;
+        }
+
+        .stat-change {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: linear-gradient(135deg, #1e2642 0%, #161b33 100%);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #252d47;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #e0e6ed;
+            font-weight: 600;
+        }
+
+        .holdings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .holding-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+
+        .holding-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .holding-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .holding-symbol {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #667eea;
+            min-width: 60px;
+        }
+
+        .holding-name {
+            color: #8b95a5;
+            font-size: 0.9rem;
+        }
+
+        .holding-stats {
+            text-align: right;
+        }
+
+        .holding-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .holding-return {
+            font-size: 0.85rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #252d47;
+            color: #8b95a5;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .transaction-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .buy {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .sell {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .deposit {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .withdrawal {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .dividend {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 0.9rem;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background: transparent;
+            border: 1px solid #667eea;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e2642 0%, #161b33 100%);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            border: 1px solid #252d47;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-button {
+            background: transparent;
+            border: none;
+            color: #8b95a5;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .file-input-wrapper {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-input-wrapper input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .upload-text {
+            color: #8b95a5;
+            margin-bottom: 10px;
+        }
+
+        .format-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .format-info h4 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .format-info code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+
+        .format-info ol, .format-info ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .format-info li {
+            margin-bottom: 8px;
+            color: #e0e6ed;
+        }
+
+        .sector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .sector-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sector-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+
+        .sector-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .sector-percent {
+            color: #8b95a5;
+            font-size: 0.9rem;
+        }
+
+        .update-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #8b95a5;
+            font-size: 0.85rem;
+        }
+
+        .update-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .status-info {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .processing-content {
+            text-align: center;
+            color: #e0e6ed;
+        }
+
+        .spinner {
+            border: 4px solid rgba(102, 126, 234, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-text {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .progress-detail {
+            color: #8b95a5;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Sector mapping for stocks
+        const SECTOR_MAP = {
+            'AAPL': 'Technology', 'MSFT': 'Technology', 'GOOGL': 'Communication Services',
+            'GOOG': 'Communication Services', 'AMZN': 'Consumer Cyclical', 'TSLA': 'Consumer Cyclical',
+            'META': 'Communication Services', 'NVDA': 'Technology', 'V': 'Financial Services',
+            'MA': 'Financial Services', 'JPM': 'Financial Services', 'JNJ': 'Healthcare',
+            'UNH': 'Healthcare', 'PFE': 'Healthcare', 'XOM': 'Energy', 'CVX': 'Energy',
+            'WMT': 'Consumer Defensive', 'PG': 'Consumer Defensive', 'KO': 'Consumer Defensive',
+            'DIS': 'Communication Services', 'NFLX': 'Communication Services', 'INTC': 'Technology',
+            'AMD': 'Technology', 'CRM': 'Technology', 'ORCL': 'Technology', 'CSCO': 'Technology',
+            'ADBE': 'Technology', 'BA': 'Industrials', 'CAT': 'Industrials', 'GE': 'Industrials',
+            'MMM': 'Industrials', 'T': 'Communication Services', 'VZ': 'Communication Services'
+        };
+
+        const sampleData = {
+            totalValue: 487234.56,
+            totalCost: 425000.00,
+            totalGain: 62234.56,
+            totalGainPercent: 14.64,
+            dayChange: 3421.12,
+            dayChangePercent: 0.71,
+            holdings: [
+                {
+                    symbol: 'AAPL', name: 'Apple Inc.', shares: 250, avgCost: 145.32,
+                    currentPrice: 178.45, value: 44612.50, gain: 8282.50,
+                    gainPercent: 22.79, sector: 'Technology'
+                },
+                {
+                    symbol: 'MSFT', name: 'Microsoft Corporation', shares: 180, avgCost: 285.67,
+                    currentPrice: 378.92, value: 68205.60, gain: 16785.00,
+                    gainPercent: 32.64, sector: 'Technology'
+                },
+                {
+                    symbol: 'NVDA', name: 'NVIDIA Corporation', shares: 150, avgCost: 312.45,
+                    currentPrice: 495.22, value: 74283.00, gain: 27415.50,
+                    gainPercent: 58.50, sector: 'Technology'
+                }
+            ],
+            transactions: [
+                { date: '2025-02-10', type: 'BUY', symbol: 'AAPL', shares: 50, price: 178.45, total: 8922.50 },
+                { date: '2025-02-08', type: 'SELL', symbol: 'TSLA', shares: 25, price: 242.84, total: 6071.00 }
+            ],
+            performanceHistory: [
+                { date: '2024-08-01', value: 425000, sp500: 5475.09 },
+                { date: '2024-12-01', value: 468900, sp500: 5950.65 },
+                { date: '2025-02-12', value: 487234, sp500: 6095.15 }
+            ]
+        };
+
+        function PortfolioTracker() {
+            const [data, setData] = useState(sampleData);
+            const [showImportModal, setShowImportModal] = useState(false);
+            const [statusMessage, setStatusMessage] = useState(null);
+            const [lastUpdate, setLastUpdate] = useState(new Date());
+            const [isUpdating, setIsUpdating] = useState(false);
+            const [updateInterval, setUpdateInterval] = useState(300000);
+            const [processing, setProcessing] = useState(false);
+            const [processingStatus, setProcessingStatus] = useState('');
+            
+            const performanceChartRef = useRef(null);
+            const allocationChartRef = useRef(null);
+            const sectorChartRef = useRef(null);
+            const performanceChartInstance = useRef(null);
+            const allocationChartInstance = useRef(null);
+            const sectorChartInstance = useRef(null);
+
+            // Fetch stock price from API
+            const fetchStockPrice = async (symbol) => {
+                const API_KEY = 'd671cohr01qmckkbo2v0d671cohr01qmckkbo2vg'; // Replace with your API key
+                try {
+                    const response = await fetch(
+                        `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`
+                    );
+                    const quote = await response.json();
+                    return quote.c || null; // c = current price
+                } catch (error) {
+                    console.error(`Error fetching price for ${symbol}:`, error);
+                    return null;
+                }
+            };
+
+            // Fetch company profile for name
+            const fetchCompanyName = async (symbol) => {
+                const API_KEY = 'YOUR_FINNHUB_API_KEY';
+                try {
+                    const response = await fetch(
+                        `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`
+                    );
+                    const profile = await response.json();
+                    return profile.name || symbol;
+                } catch (error) {
+                    return symbol;
+                }
+            };
+
+            // Parse Fidelity transaction history CSV with cash flow tracking
+            const parseFidelityTransactions = (csv) => {
+                const lines = csv.trim().split('\n');
+                
+                // Try to detect header row
+                let headerIndex = 0;
+                for (let i = 0; i < Math.min(10, lines.length); i++) {
+                    const line = lines[i].toLowerCase();
+                    if (line.includes('date') || line.includes('symbol') || line.includes('action') || line.includes('quantity')) {
+                        headerIndex = i;
+                        break;
+                    }
+                }
+                
+                const headers = lines[headerIndex].split(',').map(h => h.trim().toLowerCase());
+                
+                // Find column indices (flexible to handle different Fidelity formats)
+                const dateCol = headers.findIndex(h => h.includes('date') || h.includes('run date'));
+                const symbolCol = headers.findIndex(h => h.includes('symbol') || h.includes('ticker'));
+                const actionCol = headers.findIndex(h => h.includes('action') || h.includes('type') || h.includes('transaction'));
+                const quantityCol = headers.findIndex(h => h.includes('quantity') || h.includes('shares') || h.includes('amount'));
+                const priceCol = headers.findIndex(h => h.includes('price') && !h.includes('total'));
+                const totalCol = headers.findIndex(h => h.includes('total') || h.includes('amount'));
+                const descCol = headers.findIndex(h => h.includes('description') || h.includes('desc'));
+                
+                const transactions = [];
+                const cashFlows = [];
+                
+                for (let i = headerIndex + 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const values = line.split(',').map(v => v.trim().replace(/["']/g, ''));
+                    
+                    if (values.length < 4) continue;
+                    
+                    const symbol = symbolCol >= 0 ? values[symbolCol] : '';
+                    const action = actionCol >= 0 ? values[actionCol].toUpperCase() : '';
+                    const description = descCol >= 0 ? values[descCol].toUpperCase() : '';
+                    const date = dateCol >= 0 ? values[dateCol] : '';
+                    const totalAmount = totalCol >= 0 ? parseFloat(values[totalCol].replace(/[^0-9.-]/g, '')) : 0;
+                    
+                    // Detect cash flows (deposits/withdrawals)
+                    const isCashFlow = !symbol || 
+                                      action.includes('DEPOSIT') || 
+                                      action.includes('CONTRIBUTION') || 
+                                      action.includes('WITHDRAWAL') || 
+                                      action.includes('TRANSFER') ||
+                                      description.includes('ELECTRONIC FUNDS TRANSFER') ||
+                                      description.includes('DIRECT DEPOSIT') ||
+                                      description.includes('CONTRIBUTION');
+                    
+                    if (isCashFlow && Math.abs(totalAmount) > 0) {
+                        cashFlows.push({
+                            date: date,
+                            amount: totalAmount, // Positive = deposit, Negative = withdrawal
+                            type: totalAmount > 0 ? 'DEPOSIT' : 'WITHDRAWAL',
+                            description: description || action
+                        });
+                        continue;
+                    }
+                    
+                    // Handle dividends separately
+                    if (action.includes('DIVIDEND') || description.includes('DIVIDEND')) {
+                        cashFlows.push({
+                            date: date,
+                            amount: Math.abs(totalAmount),
+                            type: 'DIVIDEND',
+                            symbol: symbol,
+                            description: 'Dividend'
+                        });
+                        continue;
+                    }
+                    
+                    // Stock transactions
+                    if (!symbol || symbol.length > 5 || !action) continue;
+                    
+                    // Normalize action types
+                    let type = 'BUY';
+                    if (action.includes('SELL') || action.includes('SOLD')) {
+                        type = 'SELL';
+                    } else if (!action.includes('BUY') && !action.includes('BOUGHT') && !action.includes('PURCHASED')) {
+                        continue;
+                    }
+                    
+                    const transaction = {
+                        date: date,
+                        symbol: symbol.toUpperCase(),
+                        type: type,
+                        shares: quantityCol >= 0 ? parseFloat(values[quantityCol].replace(/[^0-9.-]/g, '')) : 0,
+                        price: priceCol >= 0 ? parseFloat(values[priceCol].replace(/[^0-9.-]/g, '')) : 0,
+                        total: Math.abs(totalAmount)
+                    };
+                    
+                    // Calculate missing fields
+                    if (!transaction.price && transaction.total && transaction.shares) {
+                        transaction.price = transaction.total / transaction.shares;
+                    }
+                    if (!transaction.total && transaction.price && transaction.shares) {
+                        transaction.total = transaction.price * transaction.shares;
+                    }
+                    
+                    if (transaction.shares > 0 && transaction.price > 0) {
+                        transactions.push(transaction);
+                    }
+                }
+                
+                return {
+                    transactions: transactions.sort((a, b) => new Date(a.date) - new Date(b.date)),
+                    cashFlows: cashFlows.sort((a, b) => new Date(a.date) - new Date(b.date))
+                };
+            };
+
+            // Calculate current positions from transaction history
+            const calculatePositions = (transactions) => {
+                const positions = {};
+                
+                transactions.forEach(tx => {
+                    if (!positions[tx.symbol]) {
+                        positions[tx.symbol] = {
+                            symbol: tx.symbol,
+                            shares: 0,
+                            totalCost: 0,
+                            transactions: []
+                        };
+                    }
+                    
+                    positions[tx.symbol].transactions.push(tx);
+                    
+                    if (tx.type === 'BUY') {
+                        positions[tx.symbol].shares += tx.shares;
+                        positions[tx.symbol].totalCost += tx.total;
+                    } else if (tx.type === 'SELL') {
+                        // For sells, reduce shares but adjust cost basis proportionally
+                        const avgCost = positions[tx.symbol].totalCost / positions[tx.symbol].shares;
+                        positions[tx.symbol].shares -= tx.shares;
+                        positions[tx.symbol].totalCost -= (tx.shares * avgCost);
+                    }
+                });
+                
+                // Filter out positions with no shares
+                return Object.values(positions).filter(p => p.shares > 0.01);
+            };
+
+            // Process imported transaction file
+            const processTransactionFile = async (parsedData) => {
+                setProcessing(true);
+                setProcessingStatus('Calculating positions from transaction history...');
+                
+                try {
+                    const { transactions, cashFlows } = parsedData;
+                    
+                    // Calculate current positions
+                    const positions = calculatePositions(transactions);
+                    
+                    setProcessingStatus(`Found ${positions.length} open positions. Fetching current prices...`);
+                    
+                    // Fetch current prices and company names
+                    const holdings = await Promise.all(
+                        positions.map(async (pos, index) => {
+                            setProcessingStatus(`Fetching data for ${pos.symbol} (${index + 1}/${positions.length})...`);
+                            
+                            const currentPrice = await fetchStockPrice(pos.symbol);
+                            const name = await fetchCompanyName(pos.symbol);
+                            const avgCost = pos.totalCost / pos.shares;
+                            const value = pos.shares * (currentPrice || avgCost);
+                            const gain = value - pos.totalCost;
+                            const gainPercent = (gain / pos.totalCost) * 100;
+                            
+                            return {
+                                symbol: pos.symbol,
+                                name: name,
+                                shares: pos.shares,
+                                avgCost: avgCost,
+                                currentPrice: currentPrice || avgCost,
+                                value: value,
+                                gain: gain,
+                                gainPercent: gainPercent,
+                                sector: SECTOR_MAP[pos.symbol] || 'Other'
+                            };
+                        })
+                    );
+                    
+                    setProcessingStatus('Calculating portfolio metrics...');
+                    
+                    // Calculate totals
+                    const totalValue = holdings.reduce((sum, h) => sum + h.value, 0);
+                    const totalCost = holdings.reduce((sum, h) => sum + (h.shares * h.avgCost), 0);
+                    const totalGain = totalValue - totalCost;
+                    const totalGainPercent = (totalGain / totalCost) * 100;
+                    
+                    // Track total deposits and withdrawals
+                    const totalDeposits = cashFlows
+                        .filter(cf => cf.type === 'DEPOSIT')
+                        .reduce((sum, cf) => sum + cf.amount, 0);
+                    const totalWithdrawals = Math.abs(cashFlows
+                        .filter(cf => cf.type === 'WITHDRAWAL')
+                        .reduce((sum, cf) => sum + cf.amount, 0));
+                    const totalDividends = cashFlows
+                        .filter(cf => cf.type === 'DIVIDEND')
+                        .reduce((sum, cf) => sum + cf.amount, 0);
+                    
+                    // Generate performance history with cash flow adjustments
+                    setProcessingStatus('Generating performance history...');
+                    const performanceHistory = generatePerformanceHistory(transactions, holdings, cashFlows);
+                    
+                    // Prepare all transactions for display
+                    const allTransactions = [
+                        ...transactions.map(tx => ({ ...tx, category: 'TRADE' })),
+                        ...cashFlows
+                    ].sort((a, b) => new Date(b.date) - new Date(a.date))
+                     .slice(0, 50); // Show last 50 transactions
+                    
+                    const newData = {
+                        ...data,
+                        holdings: holdings,
+                        totalValue,
+                        totalCost,
+                        totalGain,
+                        totalGainPercent,
+                        dayChange: 0,
+                        dayChangePercent: 0,
+                        transactions: allTransactions,
+                        performanceHistory,
+                        cashFlows: {
+                            deposits: totalDeposits,
+                            withdrawals: totalWithdrawals,
+                            dividends: totalDividends,
+                            net: totalDeposits - totalWithdrawals + totalDividends
+                        }
+                    };
+                    
+                    setData(newData);
+                    setShowImportModal(false);
+                    setStatusMessage({ 
+                        type: 'success', 
+                        text: `Successfully imported ${transactions.length} trades, ${cashFlows.length} cash flows, ${holdings.length} holdings` 
+                    });
+                    
+                    setTimeout(() => setStatusMessage(null), 5000);
+                } catch (error) {
+                    setStatusMessage({ type: 'error', text: 'Error processing transactions: ' + error.message });
+                } finally {
+                    setProcessing(false);
+                    setProcessingStatus('');
+                }
+            };
+
+            // Generate performance history with proper benchmark calculation
+            const generatePerformanceHistory = (transactions, holdings, cashFlows) => {
+                const history = [];
+                const now = new Date();
+                const startDate = new Date(Math.min(
+                    ...[...transactions, ...cashFlows].map(t => new Date(t.date))
+                ));
+                
+                // S&P 500 historical data (simplified - you'd want to fetch real data)
+                const sp500Data = {
+                    '2024-01-01': 4770.00, '2024-02-01': 4850.00, '2024-03-01': 5150.00,
+                    '2024-04-01': 5100.00, '2024-05-01': 5275.00, '2024-06-01': 5460.00,
+                    '2024-07-01': 5500.00, '2024-08-01': 5475.09, '2024-09-01': 5648.40,
+                    '2024-10-01': 5705.45, '2024-11-01': 5889.76, '2024-12-01': 5950.65,
+                    '2025-01-01': 6010.30, '2025-02-01': 6120.45, '2025-02-12': 6095.15
+                };
+                
+                // Helper function to get S&P 500 price for any date
+                const getSP500Price = (date) => {
+                    const dateStr = date.toISOString().split('T')[0];
+                    // Find closest available date
+                    const available = Object.keys(sp500Data).sort();
+                    const closest = available.reduce((prev, curr) => {
+                        return Math.abs(new Date(curr) - date) < Math.abs(new Date(prev) - date) ? curr : prev;
+                    });
+                    return sp500Data[closest] || 5500;
+                };
+                
+                // Track S&P 500 shares based on ACTUAL STOCK PURCHASES (not deposits)
+                // This prevents double counting: we only "buy" S&P 500 when we actually buy stocks
+                let sp500Shares = 0;
+                
+                // Process transactions chronologically to build S&P 500 position
+                transactions.forEach(tx => {
+                    const txDate = new Date(tx.date);
+                    const sp500Price = getSP500Price(txDate);
+                    
+                    if (tx.type === 'BUY') {
+                        // When you buy stocks, "buy" equivalent S&P 500
+                        sp500Shares += tx.total / sp500Price;
+                    } else if (tx.type === 'SELL') {
+                        // When you sell stocks, "sell" equivalent S&P 500
+                        sp500Shares -= tx.total / sp500Price;
+                    }
+                });
+                
+                // Also adjust for dividends that were received (assuming they're reinvested)
+                cashFlows.filter(cf => cf.type === 'DIVIDEND').forEach(cf => {
+                    const cfDate = new Date(cf.date);
+                    const sp500Price = getSP500Price(cfDate);
+                    sp500Shares += cf.amount / sp500Price;
+                });
+                
+                // Generate monthly snapshots
+                for (let d = new Date(startDate); d <= now; d.setMonth(d.getMonth() + 1)) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    
+                    // Calculate portfolio value at this date
+                    const txUpToDate = transactions.filter(tx => new Date(tx.date) <= d);
+                    const positionsAtDate = calculatePositions(txUpToDate);
+                    
+                    // For historical dates, estimate portfolio value
+                    // (In reality, you'd want historical prices, but we use current prices as proxy)
+                    const portfolioValue = positionsAtDate.reduce((sum, pos) => {
+                        const holding = holdings.find(h => h.symbol === pos.symbol);
+                        const price = holding ? holding.currentPrice : pos.totalCost / pos.shares;
+                        return sum + (pos.shares * price);
+                    }, 0);
+                    
+                    // Calculate S&P 500 value at this date
+                    // Use the shares we've accumulated up to this date
+                    const txUpToThisDate = transactions.filter(tx => new Date(tx.date) <= d);
+                    const divsUpToThisDate = cashFlows.filter(cf => cf.type === 'DIVIDEND' && new Date(cf.date) <= d);
+                    
+                    let sp500SharesAtDate = 0;
+                    txUpToThisDate.forEach(tx => {
+                        const txDate = new Date(tx.date);
+                        const sp500Price = getSP500Price(txDate);
+                        if (tx.type === 'BUY') {
+                            sp500SharesAtDate += tx.total / sp500Price;
+                        } else if (tx.type === 'SELL') {
+                            sp500SharesAtDate -= tx.total / sp500Price;
+                        }
+                    });
+                    
+                    divsUpToThisDate.forEach(cf => {
+                        const cfDate = new Date(cf.date);
+                        const sp500Price = getSP500Price(cfDate);
+                        sp500SharesAtDate += cf.amount / sp500Price;
+                    });
+                    
+                    const sp500Price = getSP500Price(d);
+                    const sp500Value = sp500SharesAtDate * sp500Price;
+                    
+                    history.push({
+                        date: dateStr,
+                        value: portfolioValue,
+                        sp500: sp500Value
+                    });
+                }
+                
+                return history;
+            };
+
+            // Handle file upload
+            const handleFileUpload = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const content = e.target.result;
+                        
+                        if (file.name.endsWith('.csv')) {
+                            const parsedData = parseFidelityTransactions(content);
+                            
+                            if (parsedData.transactions.length === 0) {
+                                setStatusMessage({ 
+                                    type: 'error', 
+                                    text: 'No valid transactions found. Please check file format.' 
+                                });
+                                return;
+                            }
+                            
+                            await processTransactionFile(parsedData);
+                        } else {
+                            setStatusMessage({ type: 'error', text: 'Please upload a CSV file' });
+                        }
+                    } catch (error) {
+                        setStatusMessage({ type: 'error', text: 'Error parsing file: ' + error.message });
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            // Real-time price update
+            const updateStockPrices = async () => {
+                if (isUpdating) return;
+                setIsUpdating(true);
+                
+                try {
+                    const updatedHoldings = await Promise.all(
+                        data.holdings.map(async (holding) => {
+                            const newPrice = await fetchStockPrice(holding.symbol);
+                            
+                            if (newPrice) {
+                                const newValue = holding.shares * newPrice;
+                                const newGain = newValue - (holding.shares * holding.avgCost);
+                                const newGainPercent = (newGain / (holding.shares * holding.avgCost)) * 100;
+                                
+                                return {
+                                    ...holding,
+                                    currentPrice: newPrice,
+                                    value: newValue,
+                                    gain: newGain,
+                                    gainPercent: newGainPercent
+                                };
+                            }
+                            return holding;
+                        })
+                    );
+
+                    const totalValue = updatedHoldings.reduce((sum, h) => sum + h.value, 0);
+                    const totalGain = totalValue - data.totalCost;
+                    const totalGainPercent = (totalGain / data.totalCost) * 100;
+                    const dayChange = totalValue - data.totalValue;
+                    const dayChangePercent = (dayChange / data.totalValue) * 100;
+
+                    setData({
+                        ...data,
+                        holdings: updatedHoldings,
+                        totalValue,
+                        totalGain,
+                        totalGainPercent,
+                        dayChange,
+                        dayChangePercent
+                    });
+
+                    setLastUpdate(new Date());
+                } catch (error) {
+                    console.error('Error updating prices:', error);
+                }
+                setIsUpdating(false);
+            };
+
+            // Auto-update prices
+            useEffect(() => {
+                const intervalId = setInterval(updateStockPrices, updateInterval);
+                return () => clearInterval(intervalId);
+            }, [data, updateInterval]);
+
+            // Calculate sector allocation
+            const getSectorAllocation = () => {
+                const sectorTotals = {};
+                
+                data.holdings.forEach(holding => {
+                    const sector = holding.sector || SECTOR_MAP[holding.symbol] || 'Other';
+                    if (!sectorTotals[sector]) {
+                        sectorTotals[sector] = 0;
+                    }
+                    sectorTotals[sector] += holding.value;
+                });
+
+                return Object.entries(sectorTotals)
+                    .map(([sector, value]) => ({
+                        sector,
+                        value,
+                        percent: (value / data.totalValue) * 100
+                    }))
+                    .sort((a, b) => b.value - a.value);
+            };
+
+            const sectorAllocation = getSectorAllocation();
+
+            // Chart rendering
+            useEffect(() => {
+                // Performance Chart with S&P 500
+                if (performanceChartRef.current && data.performanceHistory.length > 0) {
+                    const ctx = performanceChartRef.current.getContext('2d');
+                    
+                    if (performanceChartInstance.current) {
+                        performanceChartInstance.current.destroy();
+                    }
+
+                    const portfolioStart = data.performanceHistory[0].value;
+                    const sp500Start = data.performanceHistory[0].sp500;
+                    
+                    const portfolioReturns = data.performanceHistory.map(d => 
+                        ((d.value - portfolioStart) / portfolioStart) * 100
+                    );
+                    
+                    const sp500Returns = data.performanceHistory.map(d => 
+                        ((d.sp500 - sp500Start) / sp500Start) * 100
+                    );
+
+                    performanceChartInstance.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.performanceHistory.map(d => d.date),
+                            datasets: [
+                                {
+                                    label: 'My Portfolio',
+                                    data: portfolioReturns,
+                                    borderColor: '#667eea',
+                                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    borderWidth: 3
+                                },
+                                {
+                                    label: 'S&P 500',
+                                    data: sp500Returns,
+                                    borderColor: '#8b95a5',
+                                    backgroundColor: 'rgba(139, 149, 165, 0.05)',
+                                    tension: 0.4,
+                                    fill: false,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 5,
+                                    borderWidth: 2,
+                                    borderDash: [5, 5]
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { 
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        color: '#e0e6ed',
+                                        padding: 15,
+                                        font: { size: 13, weight: '600' },
+                                        usePointStyle: true,
+                                        pointStyle: 'line'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#1e2642',
+                                    titleColor: '#e0e6ed',
+                                    bodyColor: '#e0e6ed',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    displayColors: true,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.dataset.label || '';
+                                            const value = context.parsed.y;
+                                            return label + ': ' + (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                    ticks: { color: '#8b95a5' }
+                                },
+                                y: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                    ticks: {
+                                        color: '#8b95a5',
+                                        callback: function(value) {
+                                            return (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Allocation Chart
+                if (allocationChartRef.current && data.holdings.length > 0) {
+                    const ctx = allocationChartRef.current.getContext('2d');
+                    
+                    if (allocationChartInstance.current) {
+                        allocationChartInstance.current.destroy();
+                    }
+
+                    const colors = [
+                        '#667eea', '#764ba2', '#f093fb', '#4facfe',
+                        '#43e97b', '#fa709a', '#fee140', '#30cfd0', '#a8edea'
+                    ];
+
+                    allocationChartInstance.current = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.holdings.map(h => h.symbol),
+                            datasets: [{
+                                data: data.holdings.map(h => h.value),
+                                backgroundColor: colors,
+                                borderWidth: 2,
+                                borderColor: '#0a0e27'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        color: '#e0e6ed',
+                                        padding: 15,
+                                        font: { size: 12 }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#1e2642',
+                                    titleColor: '#e0e6ed',
+                                    bodyColor: '#e0e6ed',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((value / total) * 100).toFixed(2);
+                                            return label + ': $' + value.toLocaleString('en-US', {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            }) + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Sector Chart
+                if (sectorChartRef.current && sectorAllocation.length > 0) {
+                    const ctx = sectorChartRef.current.getContext('2d');
+                    
+                    if (sectorChartInstance.current) {
+                        sectorChartInstance.current.destroy();
+                    }
+
+                    const sectorColors = {
+                        'Technology': '#667eea',
+                        'Financial Services': '#43e97b',
+                        'Healthcare': '#f093fb',
+                        'Communication Services': '#4facfe',
+                        'Consumer Cyclical': '#fa709a',
+                        'Consumer Defensive': '#fee140',
+                        'Energy': '#30cfd0',
+                        'Industrials': '#a8edea',
+                        'Other': '#8b95a5'
+                    };
+
+                    sectorChartInstance.current = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: sectorAllocation.map(s => s.sector),
+                            datasets: [{
+                                label: 'Sector Allocation',
+                                data: sectorAllocation.map(s => s.value),
+                                backgroundColor: sectorAllocation.map(s => sectorColors[s.sector] || '#8b95a5'),
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#1e2642',
+                                    titleColor: '#e0e6ed',
+                                    bodyColor: '#e0e6ed',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = context.parsed.y;
+                                            const total = sectorAllocation.reduce((sum, s) => sum + s.value, 0);
+                                            const percentage = ((value / total) * 100).toFixed(2);
+                                            return '$' + value.toLocaleString('en-US', {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            }) + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                    ticks: { color: '#8b95a5' }
+                                },
+                                y: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                    ticks: {
+                                        color: '#8b95a5',
+                                        callback: function(value) {
+                                            return '$' + (value / 1000).toFixed(0) + 'K';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                return () => {
+                    if (performanceChartInstance.current) performanceChartInstance.current.destroy();
+                    if (allocationChartInstance.current) allocationChartInstance.current.destroy();
+                    if (sectorChartInstance.current) sectorChartInstance.current.destroy();
+                };
+            }, [data, sectorAllocation]);
+
+            const formatCurrency = (value) => {
+                return '$' + value.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            };
+
+            const formatPercent = (value) => {
+                return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+            };
+
+            return (
+                <div>
+                    {processing && (
+                        <div className="processing-overlay">
+                            <div className="processing-content">
+                                <div className="spinner"></div>
+                                <div className="progress-text">Processing Portfolio Data</div>
+                                <div className="progress-detail">{processingStatus}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    <header>
+                        <div className="container">
+                            <h1>My Fidelity Portfolio</h1>
+                            <p className="subtitle">Track your investments with real-time performance metrics</p>
+                            <div className="header-controls">
+                                <button onClick={() => setShowImportModal(true)}>
+                                    📁 Import Transactions
+                                </button>
+                                <button onClick={updateStockPrices} disabled={isUpdating} className="secondary">
+                                    {isUpdating ? '⏳ Updating...' : '🔄 Refresh Prices'}
+                                </button>
+                                <select 
+                                    value={updateInterval} 
+                                    onChange={(e) => setUpdateInterval(Number(e.target.value))}
+                                    style={{
+                                        background: 'rgba(102, 126, 234, 0.1)',
+                                        border: '1px solid #667eea',
+                                        color: '#e0e6ed',
+                                        padding: '10px 15px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value={60000}>Update: 1 min</option>
+                                    <option value={300000}>Update: 5 min</option>
+                                    <option value={600000}>Update: 10 min</option>
+                                </select>
+                                <div className="update-indicator">
+                                    <div className="update-dot"></div>
+                                    Last updated: {lastUpdate.toLocaleTimeString()}
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="container">
+                        {statusMessage && (
+                            <div className={`status-message status-${statusMessage.type}`}>
+                                {statusMessage.text}
+                            </div>
+                        )}
+
+                        <div className="stats-grid">
+                            <div className="stat-card">
+                                <div className="stat-label">Total Value</div>
+                                <div className="stat-value">{formatCurrency(data.totalValue)}</div>
+                                <div className={`stat-change ${data.dayChange >= 0 ? 'positive' : 'negative'}`}>
+                                    {formatCurrency(Math.abs(data.dayChange))} ({formatPercent(data.dayChangePercent)}) today
+                                </div>
+                            </div>
+
+                            <div className="stat-card">
+                                <div className="stat-label">Total Gain/Loss</div>
+                                <div className={`stat-value ${data.totalGain >= 0 ? 'positive' : 'negative'}`}>
+                                    {formatCurrency(data.totalGain)}
+                                </div>
+                                <div className={`stat-change ${data.totalGain >= 0 ? 'positive' : 'negative'}`}>
+                                    {formatPercent(data.totalGainPercent)} return
+                                </div>
+                            </div>
+
+                            <div className="stat-card">
+                                <div className="stat-label">vs S&P 500</div>
+                                <div className={`stat-value ${(() => {
+                                    if (data.performanceHistory.length < 2) return '';
+                                    const portfolioReturn = ((data.performanceHistory[data.performanceHistory.length - 1].value - data.performanceHistory[0].value) / data.performanceHistory[0].value) * 100;
+                                    const sp500Return = ((data.performanceHistory[data.performanceHistory.length - 1].sp500 - data.performanceHistory[0].sp500) / data.performanceHistory[0].sp500) * 100;
+                                    const outperformance = portfolioReturn - sp500Return;
+                                    return outperformance >= 0 ? 'positive' : 'negative';
+                                })()}`}>
+                                    {(() => {
+                                        if (data.performanceHistory.length < 2) return 'N/A';
+                                        const portfolioReturn = ((data.performanceHistory[data.performanceHistory.length - 1].value - data.performanceHistory[0].value) / data.performanceHistory[0].value) * 100;
+                                        const sp500Return = ((data.performanceHistory[data.performanceHistory.length - 1].sp500 - data.performanceHistory[0].sp500) / data.performanceHistory[0].sp500) * 100;
+                                        const outperformance = portfolioReturn - sp500Return;
+                                        return (outperformance >= 0 ? '+' : '') + outperformance.toFixed(2) + '%';
+                                    })()}
+                                </div>
+                                <div className="stat-change" style={{color: '#8b95a5'}}>
+                                    {(() => {
+                                        if (data.performanceHistory.length < 2) return '';
+                                        const portfolioReturn = ((data.performanceHistory[data.performanceHistory.length - 1].value - data.performanceHistory[0].value) / data.performanceHistory[0].value) * 100;
+                                        const sp500Return = ((data.performanceHistory[data.performanceHistory.length - 1].sp500 - data.performanceHistory[0].sp500) / data.performanceHistory[0].sp500) * 100;
+                                        return portfolioReturn > sp500Return ? 'Outperforming' : 'Underperforming';
+                                    })()} market
+                                </div>
+                            </div>
+
+                            <div className="stat-card">
+                                <div className="stat-label">Cash Flows</div>
+                                <div className="stat-value" style={{fontSize: '1.3rem'}}>
+                                    {data.cashFlows ? formatCurrency(data.cashFlows.net) : formatCurrency(data.totalCost)}
+                                </div>
+                                <div className="stat-change" style={{color: '#8b95a5', fontSize: '0.8rem'}}>
+                                    {data.cashFlows ? (
+                                        <>
+                                            ↑ {formatCurrency(data.cashFlows.deposits)} deposits
+                                            <br/>
+                                            ↓ {formatCurrency(data.cashFlows.withdrawals)} withdrawals
+                                            {data.cashFlows.dividends > 0 && (
+                                                <>
+                                                    <br/>
+                                                    💰 {formatCurrency(data.cashFlows.dividends)} dividends
+                                                </>
+                                            )}
+                                        </>
+                                    ) : (
+                                        'Total Cost Basis'
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="content-grid">
+                            <div className="card">
+                                <h2 className="card-title">Holdings</h2>
+                                <div className="holdings-list">
+                                    {data.holdings.map(holding => (
+                                        <div key={holding.symbol} className="holding-item">
+                                            <div className="holding-info">
+                                                <div className="holding-symbol">{holding.symbol}</div>
+                                                <div>
+                                                    <div className="holding-name">{holding.name}</div>
+                                                    <div className="holding-name">
+                                                        {holding.shares.toFixed(2)} shares @ {formatCurrency(holding.currentPrice)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="holding-stats">
+                                                <div className="holding-value">{formatCurrency(holding.value)}</div>
+                                                <div className={`holding-return ${holding.gain >= 0 ? 'positive' : 'negative'}`}>
+                                                    {formatCurrency(holding.gain)} ({formatPercent(holding.gainPercent)})
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="card">
+                                <h2 className="card-title">Portfolio Allocation</h2>
+                                <div className="chart-container">
+                                    <canvas ref={allocationChartRef}></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card full-width">
+                            <h2 className="card-title">Sector Allocation</h2>
+                            <div className="chart-container">
+                                <canvas ref={sectorChartRef}></canvas>
+                            </div>
+                            <div className="sector-grid">
+                                {sectorAllocation.map(sector => (
+                                    <div key={sector.sector} className="sector-item">
+                                        <div className="sector-name">{sector.sector}</div>
+                                        <div className="sector-value">{formatCurrency(sector.value)}</div>
+                                        <div className="sector-percent">{sector.percent.toFixed(2)}% of portfolio</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="card full-width">
+                            <h2 className="card-title">Performance vs S&P 500</h2>
+                            <div className="chart-container">
+                                <canvas ref={performanceChartRef}></canvas>
+                            </div>
+                        </div>
+
+                        <div className="card full-width">
+                            <h2 className="card-title">Recent Transactions & Cash Flows</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Symbol</th>
+                                        <th>Shares/Description</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.transactions.map((transaction, index) => (
+                                        <tr key={index}>
+                                            <td>{transaction.date}</td>
+                                            <td>
+                                                <span className={`transaction-type ${transaction.type.toLowerCase()}`}>
+                                                    {transaction.type}
+                                                </span>
+                                            </td>
+                                            <td style={{fontWeight: 600, color: transaction.category === 'TRADE' ? '#667eea' : '#8b95a5'}}>
+                                                {transaction.symbol || '-'}
+                                            </td>
+                                            <td>
+                                                {transaction.category === 'TRADE' 
+                                                    ? transaction.shares.toFixed(2) 
+                                                    : (transaction.description || transaction.type)}
+                                            </td>
+                                            <td>
+                                                {transaction.category === 'TRADE' && transaction.price 
+                                                    ? formatCurrency(transaction.price) 
+                                                    : '-'}
+                                            </td>
+                                            <td style={{
+                                                color: transaction.type === 'WITHDRAWAL' ? '#ef4444' : 
+                                                       transaction.type === 'DEPOSIT' ? '#10b981' :
+                                                       transaction.type === 'DIVIDEND' ? '#667eea' : '#e0e6ed'
+                                            }}>
+                                                {formatCurrency(transaction.total || transaction.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {showImportModal && (
+                        <div className="modal" onClick={() => setShowImportModal(false)}>
+                            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h2 className="modal-title">Import Fidelity Transaction History</h2>
+                                    <button className="close-button" onClick={() => setShowImportModal(false)}>×</button>
+                                </div>
+
+                                <label htmlFor="file-upload" className="file-input-wrapper">
+                                    <div className="upload-icon">📊</div>
+                                    <div className="upload-text">Upload your Fidelity transaction history</div>
+                                    <div style={{color: '#667eea', marginTop: '5px'}}>CSV file from Fidelity export</div>
+                                    <input
+                                        id="file-upload"
+                                        type="file"
+                                        accept=".csv"
+                                        onChange={handleFileUpload}
+                                    />
+                                </label>
+
+                                <div className="format-info">
+                                    <h4>📝 How to Export from Fidelity:</h4>
+                                    <ol>
+                                        <li>Log into your Fidelity account</li>
+                                        <li>Go to <strong>Accounts & Trade</strong> → <strong>Portfolio</strong></li>
+                                        <li>Click <strong>Activity & Orders</strong></li>
+                                        <li>Select <strong>History</strong> tab</li>
+                                        <li>Choose date range (recommend: All available history)</li>
+                                        <li>Click <strong>Download</strong> and select <strong>CSV</strong> format</li>
+                                        <li>Upload the downloaded file here</li>
+                                    </ol>
+                                </div>
+
+                                <div className="format-info" style={{marginTop: '15px'}}>
+                                    <h4>🎯 What This Does:</h4>
+                                    <ul>
+                                        <li><strong>Parses all your buy/sell transactions</strong> automatically</li>
+                                        <li><strong>Calculates your current positions</strong> and average cost basis</li>
+                                        <li><strong>Fetches live stock prices</strong> for all your holdings</li>
+                                        <li><strong>Generates performance history</strong> from your transaction dates</li>
+                                        <li><strong>Displays sector allocation</strong> and portfolio analytics</li>
+                                    </ul>
+                                </div>
+
+                                <div className="format-info" style={{marginTop: '15px', borderColor: '#43e97b'}}>
+                                    <h4 style={{color: '#43e97b'}}>✨ Smart Features:</h4>
+                                    <ul>
+                                        <li>Automatically handles different Fidelity CSV formats</li>
+                                        <li>Filters out dividends, transfers, and non-stock transactions</li>
+                                        <li>Calculates weighted average cost basis</li>
+                                        <li>Updates with real-time prices every 1-10 minutes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<PortfolioTracker />, document.getElementById('root'));
+    </script>
+</body>
+</html>
