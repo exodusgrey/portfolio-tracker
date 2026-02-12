@@ -536,15 +536,69 @@
         };
 
         const sampleData = {
-            totalValue: 0,
-            totalCost: 0,
-            totalGain: 0,
-            totalGainPercent: 0,
+            totalValue: 35832.36,
+            totalCost: 35417.67,
+            totalGain: 414.69,
+            totalGainPercent: 1.17,
             dayChange: 0,
             dayChangePercent: 0,
-            holdings: [],
+            holdings: [
+                // Cash & Money Market
+                { symbol: 'SPAXX', name: 'FIDELITY GOVERNMENT MONEY MARKET', shares: 17.260, avgCost: 1.0000, currentPrice: 1.0000, value: 17.26, gain: 0, gainPercent: 0, sector: 'Cash' },
+                
+                // ETFs
+                { symbol: 'FBTC', name: 'FIDELITY WISE ORIGIN BITCOIN FUND', shares: 2.184, avgCost: 70.27, currentPrice: 81.58, value: 178.17, gain: 24.66, gainPercent: 16.06, sector: 'Cryptocurrency' },
+                
+                // Stocks
+                { symbol: 'TRANE', name: 'TRANE TECHNOLOGIES PLC', shares: 0.959, avgCost: 401.04, currentPrice: 369.35, value: 354.20, gain: -30.39, gainPercent: -7.58, sector: 'Industrials' },
+                { symbol: 'STLA', name: 'STELLANTIS N.V.', shares: 95.689, avgCost: 15.23, currentPrice: 13.05, value: 1248.74, gain: -208.71, gainPercent: -14.33, sector: 'Consumer Cyclical' },
+                { symbol: 'APD', name: 'AIR PRODUCTS AND CHEMICALS INC', shares: 1.229, avgCost: 321.78, currentPrice: 290.04, value: 356.45, gain: -39.01, gainPercent: -10.95, sector: 'Basic Materials' },
+                { symbol: 'ATI', name: 'ATI INC', shares: 4.479, avgCost: 60.89, currentPrice: 55.04, value: 246.52, gain: -26.21, gainPercent: -9.61, sector: 'Basic Materials' },
+                { symbol: 'GOOGL', name: 'ALPHABET INC CAP STK CL A', shares: 6.682, avgCost: 167.15, currentPrice: 189.30, value: 1264.90, gain: 148.01, gainPercent: 13.25, sector: 'Communication Services' },
+                { symbol: 'AMZN', name: 'AMAZON.COM INC', shares: 5.569, avgCost: 192.66, currentPrice: 219.39, value: 1221.78, gain: 151.03, gainPercent: 14.11, sector: 'Consumer Cyclical' },
+                { symbol: 'AMGN', name: 'AMGEN INC', shares: 3.441, avgCost: 325.65, currentPrice: 260.64, value: 896.86, gain: -223.77, gainPercent: -19.97, sector: 'Healthcare' },
+                { symbol: 'AAPL', name: 'APPLE INC', shares: 3.199, avgCost: 223.21, currentPrice: 250.42, value: 801.09, gain: 87.08, gainPercent: 12.20, sector: 'Technology' },
+                { symbol: 'BALL', name: 'BALL CORPORATION', shares: 154.726, avgCost: 1.45, currentPrice: 1.66, value: 256.84, gain: 32.57, gainPercent: 14.52, sector: 'Consumer Cyclical' },
+                { symbol: 'BBDC', name: 'BARINGS BDC INC', shares: 372.165, avgCost: 8.87, currentPrice: 9.57, value: 3561.61, gain: 259.04, gainPercent: 7.84, sector: 'Financial Services' },
+                { symbol: 'MPV', name: 'BARINGS PARTN INVS SH BEN INT', shares: 149.523, avgCost: 13.38, currentPrice: 17.09, value: 2555.34, gain: 554.67, gainPercent: 27.73, sector: 'Financial Services' },
+                { symbol: 'KO', name: 'COCA-COLA CO', shares: 27.162, avgCost: 69.26, currentPrice: 62.26, value: 1691.10, gain: -189.63, gainPercent: -10.08, sector: 'Consumer Defensive' },
+                { symbol: 'COIN', name: 'COINBASE GLOBAL INC', shares: 0.808, avgCost: 225.93, currentPrice: 248.30, value: 200.62, gain: 18.07, gainPercent: 8.69, sector: 'Financial Services' },
+                { symbol: 'CRBG', name: 'COREBRIDGE FINL INC', shares: 79.715, avgCost: 24.44, currentPrice: 29.93, value: 2385.86, gain: 437.86, gainPercent: 22.47, sector: 'Financial Services' },
+                { symbol: 'DUKE', name: 'DUKE ENERGY CORP', shares: 7.560, avgCost: 116.13, currentPrice: 107.74, value: 814.51, gain: -63.45, gainPercent: -7.23, sector: 'Utilities' },
+                { symbol: 'META', name: 'META PLATFORMS INC', shares: 1.216, avgCost: 565.05, currentPrice: 585.51, value: 711.98, gain: 24.88, gainPercent: 3.62, sector: 'Communication Services' },
+                { symbol: 'F', name: 'FORD MTR CO DEL', shares: 92.519, avgCost: 9.67, currentPrice: 9.90, value: 915.93, gain: 20.90, gainPercent: 2.34, sector: 'Consumer Cyclical' },
+                { symbol: 'HXL', name: 'HEXCEL CORP', shares: 4.006, avgCost: 61.73, currentPrice: 62.70, value: 251.17, gain: 3.87, gainPercent: 1.57, sector: 'Industrials' },
+                { symbol: 'ING', name: 'ING GROEP N.V. SPONSORED ADR', shares: 85.739, avgCost: 18.02, currentPrice: 15.67, value: 1343.53, gain: -201.89, gainPercent: -13.07, sector: 'Financial Services' },
+                { symbol: 'ISRG', name: 'INTUITIVE SURGICAL INC', shares: 0.707, avgCost: 491.06, currentPrice: 521.96, value: 369.02, gain: 21.76, gainPercent: 6.27, sector: 'Healthcare' },
+                { symbol: 'LYG', name: 'LLOYDS BANKING GROUP ADR 4 ORD', shares: 175.568, avgCost: 2.99, currentPrice: 2.72, value: 477.54, gain: -49.71, gainPercent: -9.42, sector: 'Financial Services' },
+                { symbol: 'MSFT', name: 'MICROSOFT CORP', shares: 3.432, avgCost: 429.97, currentPrice: 421.50, value: 1446.58, gain: -29.03, gainPercent: -1.97, sector: 'Technology' },
+                { symbol: 'MRNA', name: 'MODERNA INC', shares: 9.180, avgCost: 56.93, currentPrice: 41.58, value: 381.70, gain: -140.85, gainPercent: -26.96, sector: 'Healthcare' },
+                { symbol: 'NEE', name: 'NEXTERA ENERGY INC', shares: 11.175, avgCost: 83.72, currentPrice: 71.69, value: 801.13, gain: -134.56, gainPercent: -14.38, sector: 'Utilities' },
+                { symbol: 'NUE', name: 'NUCOR CORP', shares: 2.773, avgCost: 153.80, currentPrice: 116.71, value: 323.63, gain: -102.69, gainPercent: -24.08, sector: 'Basic Materials' },
+                { symbol: 'NVDA', name: 'NVIDIA CORPORATION', shares: 13.090, avgCost: 133.87, currentPrice: 134.29, value: 1757.85, gain: 5.32, gainPercent: 0.30, sector: 'Technology' },
+                { symbol: 'PBR', name: 'PETROLEO BRASILEIRO SA PETROBRAS', shares: 68.620, avgCost: 16.15, currentPrice: 12.86, value: 882.45, gain: -225.59, gainPercent: -20.35, sector: 'Energy' },
+                { symbol: 'PFE', name: 'PFIZER INC', shares: 30.005, avgCost: 29.18, currentPrice: 26.53, value: 796.03, gain: -79.61, gainPercent: -9.09, sector: 'Healthcare' },
+                { symbol: 'PLUG', name: 'PLUG POWER INC', shares: 106.386, avgCost: 1.98, currentPrice: 2.13, value: 226.60, gain: 16.47, gainPercent: 7.84, sector: 'Industrials' },
+                { symbol: 'SONY', name: 'SONY GROUP CORPORATION', shares: 14.502, avgCost: 18.74, currentPrice: 21.16, value: 306.86, gain: 35.08, gainPercent: 12.91, sector: 'Consumer Cyclical' },
+                { symbol: 'ALSO', name: 'BLOCK INC CL A', shares: 2.635, avgCost: 77.00, currentPrice: 84.99, value: 223.94, gain: 21.05, gainPercent: 10.38, sector: 'Technology' },
+                { symbol: 'SMCI', name: 'SUPER MICRO COMPUTER INC', shares: 3.455, avgCost: 23.65, currentPrice: 30.48, value: 105.30, gain: 23.65, gainPercent: 28.96, sector: 'Technology' },
+                { symbol: 'TDY', name: 'TELEDYNE TECHNOLOGIES INC', shares: 0.811, avgCost: 464.94, currentPrice: 464.13, value: 376.40, gain: -0.65, gainPercent: -0.17, sector: 'Technology' },
+                { symbol: 'TSLA', name: 'TESLA INC', shares: 3.416, avgCost: 232.53, currentPrice: 403.84, value: 1379.51, gain: 585.25, gainPercent: 73.68, sector: 'Consumer Cyclical' },
+                { symbol: 'U', name: 'UNITY SOFTWARE INC', shares: 9.537, avgCost: 20.81, currentPrice: 22.47, value: 214.29, gain: 15.77, gainPercent: 7.95, sector: 'Technology' },
+                { symbol: 'WEN', name: 'WENDYS COMPANY', shares: 69.440, avgCost: 16.68, currentPrice: 16.30, value: 1131.87, gain: -26.18, gainPercent: -2.26, sector: 'Consumer Cyclical' },
+                { symbol: 'ETPRI', name: 'ENERGY TRANSFER L P FXD PFD I', shares: 159.660, avgCost: 11.74, currentPrice: 11.69, value: 1866.42, gain: -7.80, gainPercent: -0.42, sector: 'Energy' },
+                { symbol: 'O', name: 'REALTY INCOME CORP', shares: 32.255, avgCost: 62.48, currentPrice: 53.41, value: 1722.73, gain: -292.57, gainPercent: -14.51, sector: 'Real Estate' }
+            ],
             transactions: [],
-            performanceHistory: []
+            performanceHistory: [
+                { date: '2024-12-31', value: 35832.36, sp500: 5881.63 }
+            ],
+            cashFlows: {
+                deposits: 0,
+                withdrawals: 0,
+                dividends: 0,
+                net: 0
+            }
         };
 
         function PortfolioTracker() {
@@ -566,7 +620,7 @@
 
             // Fetch stock price from API
             const fetchStockPrice = async (symbol) => {
-                const API_KEY = 'd671cohr01qmckkbo2v0d671cohr01qmckkbo2vgY'; // Replace with your API key
+                const API_KEY = 'd671cohr01qmckkbo2v0d671cohr01qmckkbo2vg';
                 try {
                     const response = await fetch(
                         `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`
@@ -814,10 +868,40 @@
                 setProcessingStatus('Calculating positions from transaction history...');
                 
                 try {
-                    const { transactions, cashFlows } = parsedData;
+                    const { transactions: newTransactions, cashFlows: newCashFlows } = parsedData;
                     
-                    // Calculate current positions
-                    const positions = calculatePositions(transactions);
+                    // MERGE with existing transactions instead of replacing
+                    const existingTransactions = data.transactions
+                        .filter(tx => tx.category === 'TRADE')
+                        .map(tx => ({ ...tx, category: undefined })); // Remove category field for processing
+                    
+                    const existingCashFlows = data.transactions
+                        .filter(tx => tx.type === 'DEPOSIT' || tx.type === 'WITHDRAWAL' || tx.type === 'DIVIDEND');
+                    
+                    // Combine and deduplicate by date+symbol+type+shares
+                    const allTransactions = [...existingTransactions, ...newTransactions];
+                    const uniqueTransactions = allTransactions.filter((tx, index, self) => 
+                        index === self.findIndex(t => 
+                            t.date === tx.date && 
+                            t.symbol === tx.symbol && 
+                            t.type === tx.type && 
+                            Math.abs(t.shares - tx.shares) < 0.001
+                        )
+                    ).sort((a, b) => new Date(a.date) - new Date(b.date));
+                    
+                    const allCashFlows = [...existingCashFlows, ...newCashFlows];
+                    const uniqueCashFlows = allCashFlows.filter((cf, index, self) =>
+                        index === self.findIndex(c =>
+                            c.date === cf.date &&
+                            c.type === cf.type &&
+                            Math.abs(c.amount - cf.amount) < 0.01
+                        )
+                    ).sort((a, b) => new Date(a.date) - new Date(b.date));
+                    
+                    console.log(`Merged transactions: ${existingTransactions.length} existing + ${newTransactions.length} new = ${uniqueTransactions.length} total`);
+                    
+                    // Calculate current positions from ALL transactions
+                    const positions = calculatePositions(uniqueTransactions);
                     
                     setProcessingStatus(`Found ${positions.length} open positions. Fetching current prices...`);
                     
@@ -856,26 +940,26 @@
                     const totalGainPercent = (totalGain / totalCost) * 100;
                     
                     // Track total deposits and withdrawals
-                    const totalDeposits = cashFlows
+                    const totalDeposits = uniqueCashFlows
                         .filter(cf => cf.type === 'DEPOSIT')
                         .reduce((sum, cf) => sum + cf.amount, 0);
-                    const totalWithdrawals = Math.abs(cashFlows
+                    const totalWithdrawals = Math.abs(uniqueCashFlows
                         .filter(cf => cf.type === 'WITHDRAWAL')
                         .reduce((sum, cf) => sum + cf.amount, 0));
-                    const totalDividends = cashFlows
+                    const totalDividends = uniqueCashFlows
                         .filter(cf => cf.type === 'DIVIDEND')
                         .reduce((sum, cf) => sum + cf.amount, 0);
                     
                     // Generate performance history with cash flow adjustments
                     setProcessingStatus('Generating performance history...');
-                    const performanceHistory = generatePerformanceHistory(transactions, holdings, cashFlows);
+                    const performanceHistory = generatePerformanceHistory(uniqueTransactions, holdings, uniqueCashFlows);
                     
-                    // Prepare all transactions for display
-                    const allTransactions = [
-                        ...transactions.map(tx => ({ ...tx, category: 'TRADE' })),
-                        ...cashFlows
+                    // Prepare all transactions for display (last 50, most recent first)
+                    const allTransactionsForDisplay = [
+                        ...uniqueTransactions.map(tx => ({ ...tx, category: 'TRADE' })),
+                        ...uniqueCashFlows
                     ].sort((a, b) => new Date(b.date) - new Date(a.date))
-                     .slice(0, 50); // Show last 50 transactions
+                     .slice(0, 50);
                     
                     const newData = {
                         ...data,
@@ -886,7 +970,7 @@
                         totalGainPercent,
                         dayChange: 0,
                         dayChangePercent: 0,
-                        transactions: allTransactions,
+                        transactions: allTransactionsForDisplay,
                         performanceHistory,
                         cashFlows: {
                             deposits: totalDeposits,
@@ -900,7 +984,7 @@
                     setShowImportModal(false);
                     setStatusMessage({ 
                         type: 'success', 
-                        text: `Successfully imported ${transactions.length} trades, ${cashFlows.length} cash flows, ${holdings.length} holdings` 
+                        text: `Successfully merged data: ${uniqueTransactions.length} total trades, ${uniqueCashFlows.length} cash flows, ${holdings.length} holdings` 
                     });
                     
                     setTimeout(() => setStatusMessage(null), 5000);
@@ -1406,6 +1490,29 @@
                                 </button>
                                 <button onClick={updateStockPrices} disabled={isUpdating} className="secondary">
                                     {isUpdating ? '⏳ Updating...' : '🔄 Refresh Prices'}
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        if (window.confirm('Clear all data and start fresh? This cannot be undone.')) {
+                                            setData({
+                                                totalValue: 0,
+                                                totalCost: 0,
+                                                totalGain: 0,
+                                                totalGainPercent: 0,
+                                                dayChange: 0,
+                                                dayChangePercent: 0,
+                                                holdings: [],
+                                                transactions: [],
+                                                performanceHistory: []
+                                            });
+                                            setStatusMessage({ type: 'success', text: 'Portfolio cleared successfully' });
+                                            setTimeout(() => setStatusMessage(null), 3000);
+                                        }
+                                    }}
+                                    className="secondary"
+                                    style={{borderColor: '#ef4444', color: '#ef4444'}}
+                                >
+                                    🗑️ Clear Data
                                 </button>
                                 <select 
                                     value={updateInterval} 
