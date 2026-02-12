@@ -536,38 +536,15 @@
         };
 
         const sampleData = {
-            totalValue: 487234.56,
-            totalCost: 425000.00,
-            totalGain: 62234.56,
-            totalGainPercent: 14.64,
-            dayChange: 3421.12,
-            dayChangePercent: 0.71,
-            holdings: [
-                {
-                    symbol: 'AAPL', name: 'Apple Inc.', shares: 250, avgCost: 145.32,
-                    currentPrice: 178.45, value: 44612.50, gain: 8282.50,
-                    gainPercent: 22.79, sector: 'Technology'
-                },
-                {
-                    symbol: 'MSFT', name: 'Microsoft Corporation', shares: 180, avgCost: 285.67,
-                    currentPrice: 378.92, value: 68205.60, gain: 16785.00,
-                    gainPercent: 32.64, sector: 'Technology'
-                },
-                {
-                    symbol: 'NVDA', name: 'NVIDIA Corporation', shares: 150, avgCost: 312.45,
-                    currentPrice: 495.22, value: 74283.00, gain: 27415.50,
-                    gainPercent: 58.50, sector: 'Technology'
-                }
-            ],
-            transactions: [
-                { date: '2025-02-10', type: 'BUY', symbol: 'AAPL', shares: 50, price: 178.45, total: 8922.50 },
-                { date: '2025-02-08', type: 'SELL', symbol: 'TSLA', shares: 25, price: 242.84, total: 6071.00 }
-            ],
-            performanceHistory: [
-                { date: '2024-08-01', value: 425000, sp500: 5475.09 },
-                { date: '2024-12-01', value: 468900, sp500: 5950.65 },
-                { date: '2025-02-12', value: 487234, sp500: 6095.15 }
-            ]
+            totalValue: 0,
+            totalCost: 0,
+            totalGain: 0,
+            totalGainPercent: 0,
+            dayChange: 0,
+            dayChangePercent: 0,
+            holdings: [],
+            transactions: [],
+            performanceHistory: []
         };
 
         function PortfolioTracker() {
