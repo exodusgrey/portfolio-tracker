@@ -523,16 +523,74 @@
 
         // Sector mapping for stocks
         const SECTOR_MAP = {
-            'AAPL': 'Technology', 'MSFT': 'Technology', 'GOOGL': 'Communication Services',
-            'GOOG': 'Communication Services', 'AMZN': 'Consumer Cyclical', 'TSLA': 'Consumer Cyclical',
-            'META': 'Communication Services', 'NVDA': 'Technology', 'V': 'Financial Services',
-            'MA': 'Financial Services', 'JPM': 'Financial Services', 'JNJ': 'Healthcare',
-            'UNH': 'Healthcare', 'PFE': 'Healthcare', 'XOM': 'Energy', 'CVX': 'Energy',
-            'WMT': 'Consumer Defensive', 'PG': 'Consumer Defensive', 'KO': 'Consumer Defensive',
-            'DIS': 'Communication Services', 'NFLX': 'Communication Services', 'INTC': 'Technology',
-            'AMD': 'Technology', 'CRM': 'Technology', 'ORCL': 'Technology', 'CSCO': 'Technology',
-            'ADBE': 'Technology', 'BA': 'Industrials', 'CAT': 'Industrials', 'GE': 'Industrials',
-            'MMM': 'Industrials', 'T': 'Communication Services', 'VZ': 'Communication Services'
+            // Technology
+            'AAPL': 'Technology', 'MSFT': 'Technology', 'NVDA': 'Technology', 
+            'AMD': 'Technology', 'INTC': 'Technology', 'CRM': 'Technology',
+            'ORCL': 'Technology', 'CSCO': 'Technology', 'ADBE': 'Technology',
+            'ALSO': 'Technology', 'SMCI': 'Technology', 'TDY': 'Technology',
+            'U': 'Technology', 'SNOW': 'Technology', 'PLTR': 'Technology',
+            
+            // Communication Services
+            'GOOGL': 'Communication Services', 'GOOG': 'Communication Services',
+            'META': 'Communication Services', 'DIS': 'Communication Services',
+            'NFLX': 'Communication Services', 'T': 'Communication Services',
+            'VZ': 'Communication Services',
+            
+            // Consumer Cyclical
+            'AMZN': 'Consumer Cyclical', 'TSLA': 'Consumer Cyclical',
+            'F': 'Consumer Cyclical', 'STLA': 'Consumer Cyclical',
+            'BALL': 'Consumer Cyclical', 'SONY': 'Consumer Cyclical',
+            'WEN': 'Consumer Cyclical',
+            
+            // Consumer Defensive
+            'WMT': 'Consumer Defensive', 'PG': 'Consumer Defensive',
+            'KO': 'Consumer Defensive',
+            
+            // Financial Services
+            'V': 'Financial Services', 'MA': 'Financial Services',
+            'JPM': 'Financial Services', 'COIN': 'Financial Services',
+            'CRBG': 'Financial Services', 'ING': 'Financial Services',
+            'LYG': 'Financial Services', 'BBDC': 'Financial Services',
+            'MPV': 'Financial Services',
+            
+            // Healthcare
+            'JNJ': 'Healthcare', 'UNH': 'Healthcare', 'PFE': 'Healthcare',
+            'AMGN': 'Healthcare', 'ISRG': 'Healthcare', 'MRNA': 'Healthcare',
+            
+            // Energy
+            'XOM': 'Energy', 'CVX': 'Energy', 'PBR': 'Energy',
+            'ETPRI': 'Energy', 'NEE': 'Energy',
+            
+            // Industrials
+            'BA': 'Industrials', 'CAT': 'Industrials', 'GE': 'Industrials',
+            'MMM': 'Industrials', 'TRANE': 'Industrials', 'HXL': 'Industrials',
+            'MPV': 'Industrials', 'PLUG': 'Industrials',
+            
+            // Basic Materials
+            'APD': 'Basic Materials', 'ATI': 'Basic Materials',
+            'NUE': 'Basic Materials',
+            
+            // Utilities
+            'DUKE': 'Utilities', 'NEE': 'Utilities',
+            
+            // Real Estate
+            'O': 'Real Estate',
+            
+            // Cryptocurrency/ETFs
+            'FBTC': 'Cryptocurrency', 'IBIT': 'Cryptocurrency',
+            
+            // Index Funds / ETFs
+            'VOO': 'Index Fund', 'SPMO': 'Index Fund', 'RSP': 'Index Fund',
+            'ARKQ': 'Index Fund', 'HEQT': 'Index Fund', 'SCHG': 'Index Fund',
+            
+            // International
+            'TSM': 'Technology', 'ARM': 'Technology', 'LMT': 'Industrials',
+            
+            // Commodities
+            'SGOL': 'Commodities',
+            
+            // Cash
+            'SPAXX': 'Cash', 'QCOM': 'Technology'
         };
 
         const sampleData = {
@@ -1289,15 +1347,37 @@
                         performanceChartInstance.current.destroy();
                     }
 
-                    const portfolioStart = data.performanceHistory[0].value;
-                    const sp500Start = data.performanceHistory[0].sp500;
+                    // Find first non-zero baseline
+                    let portfolioStart = data.performanceHistory[0].value;
+                    let sp500Start = data.performanceHistory[0].sp500;
+                    
+                    // If first value is zero or very small, find first meaningful value
+                    for (let i = 0; i < data.performanceHistory.length; i++) {
+                        if (data.performanceHistory[i].value > 100 && data.performanceHistory[i].sp500 > 100) {
+                            portfolioStart = data.performanceHistory[i].value;
+                            sp500Start = data.performanceHistory[i].sp500;
+                            break;
+                        }
+                    }
+                    
+                    // Ensure we have valid starting points
+                    if (portfolioStart === 0 || sp500Start === 0) {
+                        portfolioStart = data.totalCost || 1;
+                        sp500Start = 5881.63; // 12/31/2024 S&P 500 close
+                    }
+                    
+                    console.log('Performance Chart Debug:');
+                    console.log('Portfolio Start:', portfolioStart);
+                    console.log('S&P 500 Start:', sp500Start);
+                    console.log('First history point:', data.performanceHistory[0]);
+                    console.log('Last history point:', data.performanceHistory[data.performanceHistory.length - 1]);
                     
                     const portfolioReturns = data.performanceHistory.map(d => 
-                        ((d.value - portfolioStart) / portfolioStart) * 100
+                        portfolioStart > 0 ? ((d.value - portfolioStart) / portfolioStart) * 100 : 0
                     );
                     
                     const sp500Returns = data.performanceHistory.map(d => 
-                        ((d.sp500 - sp500Start) / sp500Start) * 100
+                        sp500Start > 0 ? ((d.sp500 - sp500Start) / sp500Start) * 100 : 0
                     );
 
                     performanceChartInstance.current = new Chart(ctx, {
