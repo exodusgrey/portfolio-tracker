@@ -536,15 +536,38 @@
         };
 
         const sampleData = {
-            totalValue: 0,
-            totalCost: 0,
-            totalGain: 0,
-            totalGainPercent: 0,
-            dayChange: 0,
-            dayChangePercent: 0,
-            holdings: [],
-            transactions: [],
-            performanceHistory: []
+            totalValue: 487234.56,
+            totalCost: 425000.00,
+            totalGain: 62234.56,
+            totalGainPercent: 14.64,
+            dayChange: 3421.12,
+            dayChangePercent: 0.71,
+            holdings: [
+                {
+                    symbol: 'AAPL', name: 'Apple Inc.', shares: 250, avgCost: 145.32,
+                    currentPrice: 178.45, value: 44612.50, gain: 8282.50,
+                    gainPercent: 22.79, sector: 'Technology'
+                },
+                {
+                    symbol: 'MSFT', name: 'Microsoft Corporation', shares: 180, avgCost: 285.67,
+                    currentPrice: 378.92, value: 68205.60, gain: 16785.00,
+                    gainPercent: 32.64, sector: 'Technology'
+                },
+                {
+                    symbol: 'NVDA', name: 'NVIDIA Corporation', shares: 150, avgCost: 312.45,
+                    currentPrice: 495.22, value: 74283.00, gain: 27415.50,
+                    gainPercent: 58.50, sector: 'Technology'
+                }
+            ],
+            transactions: [
+                { date: '2025-02-10', type: 'BUY', symbol: 'AAPL', shares: 50, price: 178.45, total: 8922.50 },
+                { date: '2025-02-08', type: 'SELL', symbol: 'TSLA', shares: 25, price: 242.84, total: 6071.00 }
+            ],
+            performanceHistory: [
+                { date: '2024-08-01', value: 425000, sp500: 5475.09 },
+                { date: '2024-12-01', value: 468900, sp500: 5950.65 },
+                { date: '2025-02-12', value: 487234, sp500: 6095.15 }
+            ]
         };
 
         function PortfolioTracker() {
@@ -566,7 +589,7 @@
 
             // Fetch stock price from API
             const fetchStockPrice = async (symbol) => {
-                const API_KEY = 'd671cohr01qmckkbo2v0d671cohr01qmckkbo2vg'; // Replace with your API key
+                const API_KEY = 'YOUR_FINNHUB_API_KEY'; // Replace with your API key
                 try {
                     const response = await fetch(
                         `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`
@@ -581,7 +604,7 @@
 
             // Fetch company profile for name
             const fetchCompanyName = async (symbol) => {
-                const API_KEY = 'YOUR_FINNHUB_API_KEY';
+                const API_KEY = 'd671cohr01qmckkbo2v0d671cohr01qmckkbo2vg';
                 try {
                     const response = await fetch(
                         `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`
@@ -595,109 +618,180 @@
 
             // Parse Fidelity transaction history CSV with cash flow tracking
             const parseFidelityTransactions = (csv) => {
-                const lines = csv.trim().split('\n');
+                // Proper CSV parsing that handles quoted fields with commas
+                const parseCSVLine = (line) => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                };
                 
-                // Try to detect header row
-                let headerIndex = 0;
+                const lines = csv.trim().split('\n').filter(line => line.trim());
+                
+                if (lines.length < 2) {
+                    throw new Error('CSV file appears to be empty');
+                }
+                
+                // Find header row
+                let headerIndex = -1;
                 for (let i = 0; i < Math.min(10, lines.length); i++) {
                     const line = lines[i].toLowerCase();
-                    if (line.includes('date') || line.includes('symbol') || line.includes('action') || line.includes('quantity')) {
+                    if (line.includes('action') && line.includes('symbol')) {
                         headerIndex = i;
                         break;
                     }
                 }
                 
-                const headers = lines[headerIndex].split(',').map(h => h.trim().toLowerCase());
+                if (headerIndex === -1) {
+                    throw new Error('Could not find header row. Make sure your CSV has column headers.');
+                }
                 
-                // Find column indices (flexible to handle different Fidelity formats)
-                const dateCol = headers.findIndex(h => h.includes('date') || h.includes('run date'));
-                const symbolCol = headers.findIndex(h => h.includes('symbol') || h.includes('ticker'));
-                const actionCol = headers.findIndex(h => h.includes('action') || h.includes('type') || h.includes('transaction'));
-                const quantityCol = headers.findIndex(h => h.includes('quantity') || h.includes('shares') || h.includes('amount'));
-                const priceCol = headers.findIndex(h => h.includes('price') && !h.includes('total'));
-                const totalCol = headers.findIndex(h => h.includes('total') || h.includes('amount'));
-                const descCol = headers.findIndex(h => h.includes('description') || h.includes('desc'));
+                const headers = parseCSVLine(lines[headerIndex]).map(h => h.toLowerCase().trim());
+                console.log('Found headers:', headers);
+                
+                // Find columns - Fidelity format
+                const dateCol = headers.findIndex(h => h.includes('run date') || h === 'date');
+                const actionCol = headers.findIndex(h => h === 'action');
+                const symbolCol = headers.findIndex(h => h === 'symbol');
+                const priceCol = headers.findIndex(h => h === 'price');
+                const quantityCol = headers.findIndex(h => h === 'quantity');
+                const amountCol = headers.findIndex(h => h === 'amount');
+                const descCol = headers.findIndex(h => h.includes('description'));
+                
+                console.log('Column indices:', { dateCol, actionCol, symbolCol, priceCol, quantityCol, amountCol });
                 
                 const transactions = [];
                 const cashFlows = [];
                 
                 for (let i = headerIndex + 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    const values = line.split(',').map(v => v.trim().replace(/["']/g, ''));
-                    
-                    if (values.length < 4) continue;
-                    
-                    const symbol = symbolCol >= 0 ? values[symbolCol] : '';
-                    const action = actionCol >= 0 ? values[actionCol].toUpperCase() : '';
-                    const description = descCol >= 0 ? values[descCol].toUpperCase() : '';
-                    const date = dateCol >= 0 ? values[dateCol] : '';
-                    const totalAmount = totalCol >= 0 ? parseFloat(values[totalCol].replace(/[^0-9.-]/g, '')) : 0;
-                    
-                    // Detect cash flows (deposits/withdrawals)
-                    const isCashFlow = !symbol || 
-                                      action.includes('DEPOSIT') || 
-                                      action.includes('CONTRIBUTION') || 
-                                      action.includes('WITHDRAWAL') || 
-                                      action.includes('TRANSFER') ||
-                                      description.includes('ELECTRONIC FUNDS TRANSFER') ||
-                                      description.includes('DIRECT DEPOSIT') ||
-                                      description.includes('CONTRIBUTION');
-                    
-                    if (isCashFlow && Math.abs(totalAmount) > 0) {
-                        cashFlows.push({
-                            date: date,
-                            amount: totalAmount, // Positive = deposit, Negative = withdrawal
-                            type: totalAmount > 0 ? 'DEPOSIT' : 'WITHDRAWAL',
-                            description: description || action
-                        });
+                    try {
+                        const values = parseCSVLine(lines[i]);
+                        
+                        if (values.length < 5) continue; // Skip incomplete rows
+                        
+                        const date = dateCol >= 0 ? values[dateCol] : '';
+                        const action = actionCol >= 0 ? values[actionCol].trim().toUpperCase() : '';
+                        const symbol = symbolCol >= 0 ? values[symbolCol].trim().toUpperCase() : '';
+                        const description = descCol >= 0 ? values[descCol].trim().toUpperCase() : '';
+                        
+                        // Safe number parser
+                        const parseNum = (val) => {
+                            if (!val || val === '') return 0;
+                            const cleaned = val.replace(/[$,()]/g, '').trim();
+                            // Handle parentheses as negative
+                            const isNegative = val.includes('(') && val.includes(')');
+                            const num = parseFloat(cleaned);
+                            return isNaN(num) ? 0 : (isNegative ? -Math.abs(num) : num);
+                        };
+                        
+                        const price = priceCol >= 0 ? parseNum(values[priceCol]) : 0;
+                        const quantity = quantityCol >= 0 ? parseNum(values[quantityCol]) : 0;
+                        const amount = amountCol >= 0 ? parseNum(values[amountCol]) : 0;
+                        
+                        // Skip empty rows
+                        if (!action && !symbol) continue;
+                        
+                        // Handle DIVIDENDS (both regular and reinvested)
+                        if (action.includes('DIVIDEND')) {
+                            cashFlows.push({
+                                date: date,
+                                amount: Math.abs(amount),
+                                type: 'DIVIDEND',
+                                symbol: symbol,
+                                description: 'Dividend'
+                            });
+                            continue;
+                        }
+                        
+                        // Handle REINVESTMENTS (dividend reinvestment = BUY)
+                        if (action.includes('REINVEST')) {
+                            if (symbol && quantity > 0 && price > 0) {
+                                transactions.push({
+                                    date: date,
+                                    symbol: symbol,
+                                    type: 'BUY',
+                                    shares: Math.abs(quantity),
+                                    price: price,
+                                    total: Math.abs(quantity * price)
+                                });
+                            }
+                            continue;
+                        }
+                        
+                        // Handle stock purchases
+                        if (action.includes('YOU BOUGHT') || action.includes('BOUGHT')) {
+                            if (symbol && quantity > 0) {
+                                const totalAmount = Math.abs(amount);
+                                const calcPrice = totalAmount > 0 && quantity > 0 ? totalAmount / quantity : price;
+                                
+                                transactions.push({
+                                    date: date,
+                                    symbol: symbol,
+                                    type: 'BUY',
+                                    shares: Math.abs(quantity),
+                                    price: calcPrice,
+                                    total: totalAmount
+                                });
+                            }
+                            continue;
+                        }
+                        
+                        // Handle stock sales
+                        if (action.includes('YOU SOLD') || action.includes('SOLD')) {
+                            if (symbol && quantity !== 0) {
+                                const totalAmount = Math.abs(amount);
+                                const calcPrice = totalAmount > 0 && Math.abs(quantity) > 0 ? totalAmount / Math.abs(quantity) : price;
+                                
+                                transactions.push({
+                                    date: date,
+                                    symbol: symbol,
+                                    type: 'SELL',
+                                    shares: Math.abs(quantity),
+                                    price: calcPrice,
+                                    total: totalAmount
+                                });
+                            }
+                            continue;
+                        }
+                        
+                        // Handle deposits/contributions
+                        if (action.includes('ELECTRONIC FUNDS') || action.includes('CONTRIBUTION') || 
+                            description.includes('DEPOSIT') || description.includes('CONTRIBUTION')) {
+                            if (Math.abs(amount) > 10) { // Ignore small fees
+                                cashFlows.push({
+                                    date: date,
+                                    amount: amount,
+                                    type: amount > 0 ? 'DEPOSIT' : 'WITHDRAWAL',
+                                    description: action || description
+                                });
+                            }
+                            continue;
+                        }
+                        
+                    } catch (error) {
+                        console.warn(`Error parsing line ${i}:`, error);
                         continue;
                     }
-                    
-                    // Handle dividends separately
-                    if (action.includes('DIVIDEND') || description.includes('DIVIDEND')) {
-                        cashFlows.push({
-                            date: date,
-                            amount: Math.abs(totalAmount),
-                            type: 'DIVIDEND',
-                            symbol: symbol,
-                            description: 'Dividend'
-                        });
-                        continue;
-                    }
-                    
-                    // Stock transactions
-                    if (!symbol || symbol.length > 5 || !action) continue;
-                    
-                    // Normalize action types
-                    let type = 'BUY';
-                    if (action.includes('SELL') || action.includes('SOLD')) {
-                        type = 'SELL';
-                    } else if (!action.includes('BUY') && !action.includes('BOUGHT') && !action.includes('PURCHASED')) {
-                        continue;
-                    }
-                    
-                    const transaction = {
-                        date: date,
-                        symbol: symbol.toUpperCase(),
-                        type: type,
-                        shares: quantityCol >= 0 ? parseFloat(values[quantityCol].replace(/[^0-9.-]/g, '')) : 0,
-                        price: priceCol >= 0 ? parseFloat(values[priceCol].replace(/[^0-9.-]/g, '')) : 0,
-                        total: Math.abs(totalAmount)
-                    };
-                    
-                    // Calculate missing fields
-                    if (!transaction.price && transaction.total && transaction.shares) {
-                        transaction.price = transaction.total / transaction.shares;
-                    }
-                    if (!transaction.total && transaction.price && transaction.shares) {
-                        transaction.total = transaction.price * transaction.shares;
-                    }
-                    
-                    if (transaction.shares > 0 && transaction.price > 0) {
-                        transactions.push(transaction);
-                    }
+                }
+                
+                console.log(`Parsed ${transactions.length} transactions and ${cashFlows.length} cash flows`);
+                
+                if (transactions.length === 0 && cashFlows.length === 0) {
+                    throw new Error('No valid transactions found in file. Please check the format.');
                 }
                 
                 return {
