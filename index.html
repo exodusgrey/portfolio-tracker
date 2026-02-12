@@ -940,6 +940,22 @@
                     const totalGainPercent = (totalGain / totalCost) * 100;
                     
                     // Track total deposits and withdrawals
+                    // Separate reinvested dividends from cash dividends
+                    const reinvestedDividends = new Set();
+                    uniqueTransactions.forEach(tx => {
+                        if (tx.type === 'BUY') {
+                            const matchingDiv = uniqueCashFlows.find(cf =>
+                                cf.type === 'DIVIDEND' &&
+                                cf.symbol === tx.symbol &&
+                                Math.abs(new Date(cf.date) - new Date(tx.date)) < 86400000 && // Within 1 day
+                                Math.abs(cf.amount - tx.total) < 1 // Within $1
+                            );
+                            if (matchingDiv) {
+                                reinvestedDividends.add(matchingDiv);
+                            }
+                        }
+                    });
+                    
                     const totalDeposits = uniqueCashFlows
                         .filter(cf => cf.type === 'DEPOSIT')
                         .reduce((sum, cf) => sum + cf.amount, 0);
@@ -948,6 +964,9 @@
                         .reduce((sum, cf) => sum + cf.amount, 0));
                     const totalDividends = uniqueCashFlows
                         .filter(cf => cf.type === 'DIVIDEND')
+                        .reduce((sum, cf) => sum + cf.amount, 0);
+                    const cashDividends = uniqueCashFlows
+                        .filter(cf => cf.type === 'DIVIDEND' && !reinvestedDividends.has(cf))
                         .reduce((sum, cf) => sum + cf.amount, 0);
                     
                     // Generate performance history with cash flow adjustments
@@ -976,6 +995,8 @@
                             deposits: totalDeposits,
                             withdrawals: totalWithdrawals,
                             dividends: totalDividends,
+                            cashDividends: cashDividends,
+                            reinvestedDividends: totalDividends - cashDividends,
                             net: totalDeposits - totalWithdrawals + totalDividends
                         }
                     };
@@ -1000,32 +1021,40 @@
             const generatePerformanceHistory = (transactions, holdings, cashFlows) => {
                 const history = [];
                 const now = new Date();
-                const startDate = new Date(Math.min(
-                    ...[...transactions, ...cashFlows].map(t => new Date(t.date))
-                ));
                 
-                // S&P 500 historical data (simplified - you'd want to fetch real data)
+                // Find the earliest date from all data
+                const allDates = [...transactions, ...cashFlows].map(t => new Date(t.date));
+                if (allDates.length === 0) {
+                    return [{ date: now.toISOString().split('T')[0], value: 0, sp500: 5881.63 }];
+                }
+                
+                const startDate = new Date(Math.min(...allDates));
+                
+                // S&P 500 historical data (you'd want to fetch real data via API)
                 const sp500Data = {
                     '2024-01-01': 4770.00, '2024-02-01': 4850.00, '2024-03-01': 5150.00,
                     '2024-04-01': 5100.00, '2024-05-01': 5275.00, '2024-06-01': 5460.00,
                     '2024-07-01': 5500.00, '2024-08-01': 5475.09, '2024-09-01': 5648.40,
                     '2024-10-01': 5705.45, '2024-11-01': 5889.76, '2024-12-01': 5950.65,
-                    '2025-01-01': 6010.30, '2025-02-01': 6120.45, '2025-02-12': 6095.15
+                    '2024-12-31': 5881.63, '2025-01-01': 5910.30, '2025-02-01': 6020.45, 
+                    '2025-02-12': 6095.15
                 };
                 
                 // Helper function to get S&P 500 price for any date
                 const getSP500Price = (date) => {
                     const dateStr = date.toISOString().split('T')[0];
+                    // Check exact match first
+                    if (sp500Data[dateStr]) return sp500Data[dateStr];
+                    
                     // Find closest available date
                     const available = Object.keys(sp500Data).sort();
                     const closest = available.reduce((prev, curr) => {
                         return Math.abs(new Date(curr) - date) < Math.abs(new Date(prev) - date) ? curr : prev;
                     });
-                    return sp500Data[closest] || 5500;
+                    return sp500Data[closest] || 5881.63;
                 };
                 
                 // Track S&P 500 shares based on ACTUAL STOCK PURCHASES (not deposits)
-                // This prevents double counting: we only "buy" S&P 500 when we actually buy stocks
                 let sp500Shares = 0;
                 
                 // Process transactions chronologically to build S&P 500 position
@@ -1042,8 +1071,25 @@
                     }
                 });
                 
-                // Also adjust for dividends that were received (assuming they're reinvested)
-                cashFlows.filter(cf => cf.type === 'DIVIDEND').forEach(cf => {
+                // For dividends that were NOT reinvested (cash dividends), add to S&P 500
+                const reinvestedDividends = new Set();
+                transactions.forEach(tx => {
+                    if (tx.type === 'BUY') {
+                        // Check if this buy matches a dividend (reinvestment)
+                        const matchingDiv = cashFlows.find(cf => 
+                            cf.type === 'DIVIDEND' && 
+                            cf.symbol === tx.symbol &&
+                            Math.abs(new Date(cf.date) - new Date(tx.date)) < 86400000 && // Within 1 day
+                            Math.abs(cf.amount - tx.total) < 1 // Within $1
+                        );
+                        if (matchingDiv) {
+                            reinvestedDividends.add(matchingDiv);
+                        }
+                    }
+                });
+                
+                // Add cash dividends (not reinvested) to S&P 500
+                cashFlows.filter(cf => cf.type === 'DIVIDEND' && !reinvestedDividends.has(cf)).forEach(cf => {
                     const cfDate = new Date(cf.date);
                     const sp500Price = getSP500Price(cfDate);
                     sp500Shares += cf.amount / sp500Price;
@@ -1057,18 +1103,25 @@
                     const txUpToDate = transactions.filter(tx => new Date(tx.date) <= d);
                     const positionsAtDate = calculatePositions(txUpToDate);
                     
-                    // For historical dates, estimate portfolio value
-                    // (In reality, you'd want historical prices, but we use current prices as proxy)
+                    // Calculate portfolio value (use current prices for all dates as approximation)
                     const portfolioValue = positionsAtDate.reduce((sum, pos) => {
                         const holding = holdings.find(h => h.symbol === pos.symbol);
                         const price = holding ? holding.currentPrice : pos.totalCost / pos.shares;
                         return sum + (pos.shares * price);
                     }, 0);
                     
+                    // Add cash dividends that weren't reinvested
+                    const cashDivsUpToDate = cashFlows
+                        .filter(cf => cf.type === 'DIVIDEND' && new Date(cf.date) <= d && !reinvestedDividends.has(cf))
+                        .reduce((sum, cf) => sum + cf.amount, 0);
+                    
                     // Calculate S&P 500 value at this date
-                    // Use the shares we've accumulated up to this date
                     const txUpToThisDate = transactions.filter(tx => new Date(tx.date) <= d);
-                    const divsUpToThisDate = cashFlows.filter(cf => cf.type === 'DIVIDEND' && new Date(cf.date) <= d);
+                    const divsUpToThisDate = cashFlows.filter(cf => 
+                        cf.type === 'DIVIDEND' && 
+                        new Date(cf.date) <= d && 
+                        !reinvestedDividends.has(cf)
+                    );
                     
                     let sp500SharesAtDate = 0;
                     txUpToThisDate.forEach(tx => {
@@ -1092,12 +1145,27 @@
                     
                     history.push({
                         date: dateStr,
-                        value: portfolioValue,
+                        value: portfolioValue + cashDivsUpToDate,
                         sp500: sp500Value
                     });
                 }
                 
-                return history;
+                // Ensure we have the current date
+                const today = now.toISOString().split('T')[0];
+                if (!history.find(h => h.date === today)) {
+                    const currentPortfolioValue = holdings.reduce((sum, h) => sum + h.value, 0);
+                    const cashDivs = cashFlows
+                        .filter(cf => cf.type === 'DIVIDEND' && !reinvestedDividends.has(cf))
+                        .reduce((sum, cf) => sum + cf.amount, 0);
+                    
+                    history.push({
+                        date: today,
+                        value: currentPortfolioValue + cashDivs,
+                        sp500: sp500Shares * getSP500Price(now)
+                    });
+                }
+                
+                return history.sort((a, b) => new Date(a.date) - new Date(b.date));
             };
 
             // Handle file upload
@@ -1605,7 +1673,9 @@
                                             {data.cashFlows.dividends > 0 && (
                                                 <>
                                                     <br/>
-                                                    💰 {formatCurrency(data.cashFlows.dividends)} dividends
+                                                    💰 {formatCurrency(data.cashFlows.cashDividends)} cash divs
+                                                    <br/>
+                                                    🔄 {formatCurrency(data.cashFlows.reinvestedDividends)} reinvested
                                                 </>
                                             )}
                                         </>
