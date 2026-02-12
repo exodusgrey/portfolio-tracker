@@ -1484,13 +1484,19 @@
                     console.log('First history point:', data.performanceHistory[0]);
                     console.log('Last history point:', data.performanceHistory[data.performanceHistory.length - 1]);
                     
-                    const portfolioReturns = data.performanceHistory.map(d => 
-                        portfolioStart > 0 ? ((d.value - portfolioStart) / portfolioStart) * 100 : 0
-                    );
+                    // Calculate percentage returns from the baseline
+                    const portfolioReturns = data.performanceHistory.map(d => {
+                        if (!portfolioStart || portfolioStart === 0) return 0;
+                        return ((d.value - portfolioStart) / portfolioStart) * 100;
+                    });
                     
-                    const sp500Returns = data.performanceHistory.map(d => 
-                        sp500Start > 0 ? ((d.sp500 - sp500Start) / sp500Start) * 100 : 0
-                    );
+                    const sp500Returns = data.performanceHistory.map(d => {
+                        if (!sp500Start || sp500Start === 0) return 0;
+                        return ((d.sp500 - sp500Start) / sp500Start) * 100;
+                    });
+                    
+                    console.log('Portfolio returns (%):', portfolioReturns);
+                    console.log('S&P 500 returns (%):', sp500Returns);
 
                     performanceChartInstance.current = new Chart(ctx, {
                         type: 'line',
@@ -1828,24 +1834,34 @@
                                 <div className="stat-label">vs S&P 500</div>
                                 <div className={`stat-value ${(() => {
                                     if (data.performanceHistory.length < 2) return '';
-                                    const portfolioReturn = ((data.performanceHistory[data.performanceHistory.length - 1].value - data.performanceHistory[0].value) / data.performanceHistory[0].value) * 100;
-                                    const sp500Return = ((data.performanceHistory[data.performanceHistory.length - 1].sp500 - data.performanceHistory[0].sp500) / data.performanceHistory[0].sp500) * 100;
+                                    const first = data.performanceHistory[0];
+                                    const last = data.performanceHistory[data.performanceHistory.length - 1];
+                                    if (!first.value || !first.sp500 || !last.value || !last.sp500) return '';
+                                    const portfolioReturn = ((last.value - first.value) / first.value) * 100;
+                                    const sp500Return = ((last.sp500 - first.sp500) / first.sp500) * 100;
                                     const outperformance = portfolioReturn - sp500Return;
                                     return outperformance >= 0 ? 'positive' : 'negative';
                                 })()}`}>
                                     {(() => {
                                         if (data.performanceHistory.length < 2) return 'N/A';
-                                        const portfolioReturn = ((data.performanceHistory[data.performanceHistory.length - 1].value - data.performanceHistory[0].value) / data.performanceHistory[0].value) * 100;
-                                        const sp500Return = ((data.performanceHistory[data.performanceHistory.length - 1].sp500 - data.performanceHistory[0].sp500) / data.performanceHistory[0].sp500) * 100;
+                                        const first = data.performanceHistory[0];
+                                        const last = data.performanceHistory[data.performanceHistory.length - 1];
+                                        if (!first.value || !first.sp500 || !last.value || !last.sp500) return 'N/A';
+                                        const portfolioReturn = ((last.value - first.value) / first.value) * 100;
+                                        const sp500Return = ((last.sp500 - first.sp500) / first.sp500) * 100;
                                         const outperformance = portfolioReturn - sp500Return;
+                                        if (isNaN(outperformance)) return 'N/A';
                                         return (outperformance >= 0 ? '+' : '') + outperformance.toFixed(2) + '%';
                                     })()}
                                 </div>
                                 <div className="stat-change" style={{color: '#8b95a5'}}>
                                     {(() => {
                                         if (data.performanceHistory.length < 2) return '';
-                                        const portfolioReturn = ((data.performanceHistory[data.performanceHistory.length - 1].value - data.performanceHistory[0].value) / data.performanceHistory[0].value) * 100;
-                                        const sp500Return = ((data.performanceHistory[data.performanceHistory.length - 1].sp500 - data.performanceHistory[0].sp500) / data.performanceHistory[0].sp500) * 100;
+                                        const first = data.performanceHistory[0];
+                                        const last = data.performanceHistory[data.performanceHistory.length - 1];
+                                        if (!first.value || !first.sp500 || !last.value || !last.sp500) return '';
+                                        const portfolioReturn = ((last.value - first.value) / first.value) * 100;
+                                        const sp500Return = ((last.sp500 - first.sp500) / first.sp500) * 100;
                                         return portfolioReturn > sp500Return ? 'Outperforming' : 'Underperforming';
                                     })()} market
                                 </div>
