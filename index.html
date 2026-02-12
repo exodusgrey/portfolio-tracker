@@ -1459,32 +1459,29 @@
                         performanceChartInstance.current.destroy();
                     }
 
-                    // Find first non-zero baseline
-                    let portfolioStart = data.performanceHistory[0].value;
-                    let sp500Start = data.performanceHistory[0].sp500;
+                    // Use the ACTUAL first and last points from the data
+                    const firstPoint = data.performanceHistory[0];
+                    const lastPoint = data.performanceHistory[data.performanceHistory.length - 1];
                     
-                    // If first value is zero or very small, find first meaningful value
-                    for (let i = 0; i < data.performanceHistory.length; i++) {
-                        if (data.performanceHistory[i].value > 100 && data.performanceHistory[i].sp500 > 100) {
-                            portfolioStart = data.performanceHistory[i].value;
-                            sp500Start = data.performanceHistory[i].sp500;
-                            break;
-                        }
-                    }
+                    // Use the first point's values as the baseline (should start at 0%)
+                    let portfolioStart = firstPoint.value;
+                    let sp500Start = firstPoint.sp500;
                     
                     // Ensure we have valid starting points
-                    if (portfolioStart === 0 || sp500Start === 0) {
-                        portfolioStart = data.totalCost || 1;
-                        sp500Start = 5881.63; // 12/31/2024 S&P 500 close
+                    if (!portfolioStart || portfolioStart === 0) {
+                        portfolioStart = data.totalCost || 35832.36;
+                    }
+                    if (!sp500Start || sp500Start === 0) {
+                        sp500Start = 5881.63;
                     }
                     
                     console.log('Performance Chart Debug:');
-                    console.log('Portfolio Start:', portfolioStart);
-                    console.log('S&P 500 Start:', sp500Start);
-                    console.log('First history point:', data.performanceHistory[0]);
-                    console.log('Last history point:', data.performanceHistory[data.performanceHistory.length - 1]);
+                    console.log('First point:', firstPoint);
+                    console.log('Last point:', lastPoint);
+                    console.log('Using Portfolio Start:', portfolioStart);
+                    console.log('Using S&P 500 Start:', sp500Start);
                     
-                    // Calculate percentage returns from the baseline
+                    // Calculate percentage returns - FIRST point should be 0%
                     const portfolioReturns = data.performanceHistory.map(d => {
                         if (!portfolioStart || portfolioStart === 0) return 0;
                         return ((d.value - portfolioStart) / portfolioStart) * 100;
@@ -1497,6 +1494,8 @@
                     
                     console.log('Portfolio returns (%):', portfolioReturns);
                     console.log('S&P 500 returns (%):', sp500Returns);
+                    console.log('First portfolio return should be 0%:', portfolioReturns[0]);
+                    console.log('First S&P500 return should be 0%:', sp500Returns[0]);
 
                     performanceChartInstance.current = new Chart(ctx, {
                         type: 'line',
